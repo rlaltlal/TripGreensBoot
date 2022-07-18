@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.board.mapper.BoardMapper">
+    <resultMap id="BoardMap"
+      type="com.green.boardsp.vo.BoardVo">
+     <result property="idx"       column="IDX"       javaType="int" />
+     <result property="menu_id"   column="MENU_ID"   javaType="string" />
+     <result property="title"     column="TITLE"     javaType="string" />
+     <result property="cont"      column="CONT"      javaType="string" />
+     <result property="writter"    column="WRITTER"    javaType="string" />
+     <result property="regdate"   column="REGDATE"   javaType="string" />
+     <result property="readcount" column="READCOUNT" javaType="int" />
+     <result property="bnum"      column="BNUM"      javaType="int" />
+     <result property="lvl"       column="LVL"       javaType="int" />
+     <result property="step"      column="STEP"      javaType="int" />
+     <result property="nref"      column="NREF"      javaType="int" />
+    </resultMap>
+	<select id="getUserVo">
+	    INSERT INTO BOARD(IDX,MENU_ID, TITLE, CONT,WRITTER)
+	    VALUES(
+	      (SELECT NVL(MAX(IDX),0)+1 FROM BOARD),
+	      'MENU01',
+	      #{title},
+	      #{cont},
+	      #{writter}
+	    )
+	</select>
+</mapper>
