@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.board.mapper.BoardMapper2">
+ <resultMap id="BoardMap"
+      type="com.board.domain.BoardVo">
+     <result property="idx"       column="IDX"       javaType="int" />
+     <result property="menu_id"   column="MENU_ID"   javaType="string" />
+     <result property="title"     column="TITLE"     javaType="string" />
+     <result property="cont"      column="CONT"      javaType="string" />
+     <result property="writter"    column="WRITTER"    javaType="string" />
+     <result property="regdate"   column="REGDATE"   javaType="string" />
+     <result property="readcount" column="READCOUNT" javaType="int" />
+     <result property="bnum"      column="BNUM"      javaType="int" />
+     <result property="lvl"       column="LVL"       javaType="int" />
+     <result property="step"      column="STEP"      javaType="int" />
+     <result property="nref"      column="NREF"      javaType="int" />
+    </resultMap>
+  
+	<!-- 삭제하기 -->
+   <delete id="BoardDelete">
+      DELETE  FROM  MYBOARD
+       WHERE  BSEQ  =  #{ bseq } 
+   </delete>
+   
+       
+   <!-- 수정하기 -->
+   <update id="BoardUpdate" parameterType = "hashmap" >
+      UPDATE   MYBOARD
+       SET     TITLE = #{ title },
+               CONT  = #{ cont  },
+                SUBCATEGORY = #{ subcategory }
+       WHERE   BSEQ   = #{ bseq}         
+   </update>
+   
+    <!-- 내용 보기 -->
+    <select id  = "Board"  parameterType = "hashmap"    resultType    = "com.board.domain.BoardVo2">
+      SELECT
+	   TITLE,
+	   CONT,
+	   BSEQ,
+	   MENU_ID,
+	   SUBCATEGORY,
+	   MYBOARD.EMAIL AS EMAIL,
+	   WRITEDATE,
+	   RECOMMEND,
+	   NICKNAME
+	   FROM MYBOARD LEFT OUTER JOIN TUSERS ON (MYBOARD.EMAIL=TUSERS.EMAIL)
+	   WHERE BSEQ = #{bseq}
+	   </select>
+	   
+	<!-- 조회수 증가 -->   
+    <update id="ReadCountUpdate">
+       UPDATE  MYBOARD
+        SET    READCOUNT = READCOUNT + 1     
+        WHERE  BSEQ  = #{bseq}        
+    </update> 	
+    
+    	   
+	<!-- 추천수 증가 -->   
+    <update id="RecommendUpdate">
+       UPDATE  MYBOARD
+        SET    RECOMMEND = RECOMMEND + 1     
+        WHERE  BSEQ  = #{bseq}        
+    </update>    
+    
+   	<!--  추천 이메일 저장 -->
+     <insert  id="Recommend" >
+    INSERT INTO RECOMMEND(
+    	BSEQ,
+	    EMAIL
+	) VALUES (
+	    #{bseq},
+	    #{email}
+	    )
+	    
+    </insert> 
+	<!--  글쓰기 -->
+     <insert  id="BoardInsert" >
+    INSERT INTO MYBOARD(
+    	BSEQ,
+	    TITLE,
+	    CONT,
+	    EMAIL,
+	    SUBCATEGORY,
+	    WRITEDATE,
+	    MENU_ID
+	) VALUES (
+		(SELECT BSEQ FROM ( SELECT COALESCE(MAX(BSEQ),0)+1 BSEQ FROM MYBOARD ) AS A),
+	    #{title},
+	    #{cont},
+	    #{email},
+	    #{subcategory},
+	    NOW(),
+	    #{menu_id}
+	    
+	    )
+	    
+    </insert>
+
+	
+    <!-- list 총 갯수 -->
+	<select id="countArticle" resultType="int">
+   		SELECT COUNT(*) FROM MYBOARD
+   		WHERE MENU_ID = #{menu_id}
+    		<include refid="search"></include>		
+    		<include refid="search2"></include>   
+    		
+	</select>
+     
+
+	<!-- 글 목록 -->
+	 <select id="listAll" resultType="com.board.domain.BoardVo2">
+   	<include refid="pagingHeader"></include>
+	 SELECT   
+	            BSEQ,
+		    	TITLE, 
+		        MENU_ID,
+		        RECOMMEND,
+		        READCOUNT,
+		        MYBOARD.EMAIL AS EMAIL,
+		        SUBCATEGORY,
+		        NICKNAME,
+		        (SELECT COUNT(*) FROM MYBOARD) AS RECNT
+				FROM MYBOARD LEFT OUTER JOIN TUSERS ON (MYBOARD.EMAIL=TUSERS.EMAIL)
+		 		WHERE MENU_ID = #{menu_id}
+		<include refid="search"></include>   
+		<include refid="search2"></include>   
+
+		ORDER BY BSEQ DESC
+	<include refid="pagingFooter"></include>
+	           
+    </select>
+ 	<!-- 추천수 상위 3개 -->   
+  <select id="listAll2" resultType="com.board.domain.BoardVo2">
+  
+   	SELECT * 
+   	FROM ( SELECT
+	            BSEQ,
+		    	TITLE, 
+		        MENU_ID,
+		        READCOUNT,
+		        MYBOARD.EMAIL AS EMAIL,
+		        SUBCATEGORY,
+		        NICKNAME,
+		        RECOMMEND,
+		        ROW_NUMBER() OVER(ORDER BY RECOMMEND DESC) AS RNK
+				FROM MYBOARD LEFT OUTER JOIN TUSERS ON (MYBOARD.EMAIL=TUSERS.EMAIL)
+		 		WHERE MENU_ID = #{menu_id}
+		            <include refid="search"></include>   ) AS B 
+	        WHERE  RNK BETWEEN 1 AND 3 
+		                     
+    </select>
+    
+    <!-- 추천 이메일 목록 -->
+      <select id="recList" resultType="com.board.domain.RecommendVo" parameterType = "hashmap" >
+  
+   SELECT       BSEQ,
+		    	EMAIL
+				FROM RECOMMEND
+		 		WHERE BSEQ = #{bseq}
+
+	           
+    </select>
+    
+    
+    
+    
+    
+     <!-- 버튼 sql-->
+     <sql id="search">
+		<choose>
+			<when test="subcategory == 'SEOUL'">
+			 AND SUBCATEGORY = 'SEOUL'
+			</when>
+			<when test="subcategory == 'BUSAN'">
+			 AND SUBCATEGORY = 'BUSAN'
+			</when>
+			<when test="subcategory == 'JEJU'">
+			 AND SUBCATEGORY = 'JEJU'
+			</when>
+			<when test="subcategory == 'ETC'">
+			 AND SUBCATEGORY NOT IN ('SEOUL', 'BUSAN', 'JEJU')
+			</when>
+			<when test="subcategory == 'PLAY'">
+			 AND SUBCATEGORY = 'PLAY'
+			</when>
+			<when test="subcategory == 'SLEEP'">
+			 AND SUBCATEGORY = 'SLEEP'
+			</when>
+			<when test="subcategory == 'FOOD'">
+			 AND SUBCATEGORY = 'FOOD'
+			</when>
+			<when test="subcategory == 'ETC2'">
+			 AND SUBCATEGORY NOT IN ('PLAY', 'SLEEP', 'FOOD')
+			</when>
+			<when test="subcategory == 'HUMOR'">
+			 AND SUBCATEGORY = 'HUMOR'
+			</when>
+			<when test="subcategory == 'INFORM'">
+			 AND SUBCATEGORY = 'INFORM'
+			</when>
+			<when test="subcategory == 'WITH'">
+			 AND SUBCATEGORY = 'WITH'
+			</when>
+			<when test="subcategory == 'ETC3'">
+			 AND SUBCATEGORY NOT IN ('HUMOR', 'INFORM', 'WITH')
+			</when>
+			
+			
+
+			<otherwise>
+			
+			</otherwise>
+		</choose>
+	</sql> 
+	
+    <sql id="search2">
+		<choose>
+			<when test="searchOption == 'all'">
+				AND TITLE LIKE '%'||#{keyword}||'%'
+				OR CONT LIKE '%'||#{keyword}||'%'
+			</when>
+
+			<otherwise>
+				AND ${searchOption} LIKE '%'||#{keyword}||'%'
+			</otherwise>
+		</choose>
+	</sql> 
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+		SELECT * FROM(
+			SELECT @rownum:=@rownum+1 AS rn,
+			       A.* FROM (
+		
+	</sql>
+	
+	<sql id="pagingFooter">
+		) AS A , (SELECT @rownum:=0) R
+	) AS B WHERE rn BETWEEN #{start} AND #{end}
+	</sql>
+</mapper>
