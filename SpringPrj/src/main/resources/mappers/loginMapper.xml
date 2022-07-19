@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.board.mapper.BoardMapper">
     <resultMap id="BoardMap"
-      type="com.green.boardsp.vo.BoardVo">
+      type="com.board.domain.BoardVo">
      <result property="idx"       column="IDX"       javaType="int" />
      <result property="menu_id"   column="MENU_ID"   javaType="string" />
      <result property="title"     column="TITLE"     javaType="string" />

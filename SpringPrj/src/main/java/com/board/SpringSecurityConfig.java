@@ -26,7 +26,7 @@ public class SpringSecurityConfig{
 			.authorizeRequests()
 				.antMatchers("/","/login","/loginProcess").permitAll() // "/","/login"은 인증이 필요없음
 				.antMatchers("/boardList2/**").hasRole("USER")
-				.anyRequest().authenticated() // 그외 URL은 인증필요
+				//.anyRequest().authenticated() // 그외 URL은 인증필요
 				.and()
 			.formLogin() // 인증이 필요한 페이지 접근시 리다이렉팅 되는 URL
 				.loginPage("/login")
